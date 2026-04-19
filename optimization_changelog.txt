@@ -1,0 +1,330 @@
+================================================================================
+  pyRadar Optimization Changelog
+  X-Band Phased Array Radar — XBDP / Stingray / ZCU102
+  Date: March 26, 2026
+================================================================================
+
+This document describes all performance optimizations made to the pyRadar
+codebase and associated hardware configuration.  Each entry explains WHAT
+was changed, WHERE it lives, and WHY it helps.
+
+Starting baseline (before any changes):
+    Capture : ~588 ms
+    Process : ~295 ms
+    Plot    :  ~27 ms
+    FPS     :  ~1.1
+
+================================================================================
+1. VECTORIZED MTI FILTER (np.diff)
+================================================================================
+Files:  radar_utils/signal_processing.py
+        — freq_process(), freq_process_complex(), freq_process_complex_batch()
+
+What changed:
+    The Moving Target Indicator (2-pulse canceller) was replaced from a
+    manual Python loop subtracting consecutive chirps to a single call:
+
+        mti_output = np.diff(range_fft, axis=<slow-time axis>) * 2.0
+
+    The * 2.0 factor compensates for the 3 dB loss inherent in a 2-pulse
+    canceller.
+
+Why it helps:
+    np.diff is implemented in compiled C inside NumPy.  It processes the
+    entire (chirps × range_bins) matrix in one vectorized operation instead
+    of iterating row-by-row in Python.  This removed ~10-15 ms per frame
+    from the processing stage.
+
+
+================================================================================
+2. BATCH SUBARRAY FFT (freq_process_complex_batch)
+================================================================================
+Files:  radar_utils/signal_processing.py  — new function
+        radar_utils/tracking.py           — caller in RangeDopplerProcessing
+
+What changed:
+    A new function freq_process_complex_batch() processes all 3 RX subarrays
+    in a single pass.  It stacks the subarray data into a 3-D tensor of
+    shape (K=3, chirps, samples) and calls np.fft.fft once on the entire
+    tensor instead of calling freq_process_complex() three separate times.
+
+    Caller:
+        [rd_sub1, rd_sub2, rd_sub4], [rfm1, rfm2, rfm4] = \
+            freq_process_complex_batch(
+                [sub1_mixed, sub2_mixed, sub4_mixed], ...)
+
+Why it helps:
+    A single large FFT call amortizes the FFT plan overhead (twiddle factor
+    computation) and enables better SIMD/cache utilization inside NumPy's
+    FFT backend (MKL or OpenBLAS).  Saves ~15-20 ms per frame compared to
+    3 individual calls.
+
+
+================================================================================
+3. VECTORIZED BURST EXTRACTION (no Python loop)
+================================================================================
+File:   radar_utils/tracking.py — get_radar_data(), else branch
+
+What changed:
+    Extracting 256 chirps from the raw ADC buffer was done with a Python
+    for-loop slicing one chirp at a time.  Replaced with NumPy fancy
+    indexing:
+
+        burst_indices = np.arange(num_bursts)
+        start_indices = start_offset_samples + burst_indices * N_frame
+        sample_offsets = np.arange(samples_per_chirp)
+        all_indices = start_indices[:, np.newaxis] + sample_offsets[np.newaxis, :]
+        rx_bursts = sum_data[all_indices]
+
+    The same indexing array extracts per-subarray burst matrices
+    (sub1_bursts, sub2_bursts, sub4_bursts) so the caller can dechirp
+    each subarray directly without re-slicing.
+
+Why it helps:
+    The Python loop executed 256 iterations of array slicing with per-
+    iteration interpreter overhead.  The fancy-index approach builds the
+    full (256 × samples_per_chirp) matrix in a single compiled gather
+    operation.  Saves ~10 ms per frame.
+
+
+================================================================================
+4. ELIMINATED DEAD rx_bursts_mixed COMPUTATION
+================================================================================
+File:   radar_utils/tracking.py — RangeDopplerProcessing
+
+What changed:
+    The main loop was computing rx_bursts_mixed = rx_bursts * np.conj(iq)
+    on the sum-of-subarrays, then ALSO computing per-subarray dechirp
+    (sub1_mixed, sub2_mixed, sub4_mixed) for the monopulse path.  The
+    sum-path result was never used because radar_data is now derived from
+    the sum of the 3 per-subarray range-Doppler maps.
+
+    Removed the dead computation entirely.
+
+Why it helps:
+    Eliminates one (256 × N) element-wise complex multiply that contributed
+    ~5 ms per frame with no output consumer.
+
+
+================================================================================
+5. DYNAMIC RX CHANNEL CONFIGURATION (build_rx_channel_config)
+================================================================================
+Files:  radar_utils/hardware_setup.py — SUBARRAY_TO_ADC constant,
+                                        build_rx_channel_config() function
+        main.py                       — calls build_rx_channel_config()
+        radar_utils/tracking.py       — all 7 former hardcoded dicts replaced
+
+What changed:
+    A constant SUBARRAY_TO_ADC = {1:3, 2:1, 3:0, 4:2} encodes the physical
+    wiring from subarray number to AD9081 ADC channel.
+
+    build_rx_channel_config(subarray_modes) dynamically computes:
+      - rx_adc_channels:       sorted list of ADC channels to enable
+      - subarray_to_data_index: maps subarray ID → position in adc.rx() output
+
+    main.py passes rx_adc_channels to setup_ad9081() so only the 3 RX
+    subarrays' ADC channels are enabled.  The TX subarray (sub 3 / ADC 0)
+    is disabled at the hardware level.
+
+    All 7 places in tracking.py that previously used hardcoded mapping dicts
+    like {1:2, 2:0, 4:1} now call build_rx_channel_config() instead.
+
+Why it helps:
+    - Disabling the TX subarray's ADC channel reduces DMA transfer size by
+      25% (3 channels instead of 4), saving ~150 ms of capture time.
+    - Single source of truth eliminates bugs when subarray assignments change.
+    - If the TX subarray changes (e.g., sub 2 instead of sub 3), no code
+      edits are needed — only the subarray_modes dict in main.py changes.
+
+
+================================================================================
+6. FFT DISPLAY DEFAULTS TO ZERO-VELOCITY BIN ONLY
+================================================================================
+File:   radar_utils/tracking.py — RangeDopplerProcessing
+
+What changed:
+    The FFT overlay plot (Signal Processing tab) previously plotted ALL 256
+    Doppler bin range profiles on startup.  Now it defaults to showing only
+    the zero-velocity bin (the single center Doppler bin):
+
+        fft_display['include_additional_velocity_bins'] = False
+
+    User can toggle to all-bins mode with a button.
+
+Why it helps:
+    Creating, drawing, and removing 256 PlotCurveItem objects per frame on
+    PyQtGraph is expensive (~5-10 ms).  Showing 1 curve instead of 256
+    eliminates this cost when the feature isn't actively needed.
+
+
+================================================================================
+7. LAZY TAB RENDERING
+================================================================================
+File:   radar_utils/tracking.py — RangeDopplerProcessing
+
+What changed:
+    The Signal Processing tab's 3 diagnostic plots (raw IQ waveform,
+    received data FFT, and range-FFT overlay) are now only computed and
+    rendered when that tab is actually visible:
+
+        sp_tab_active = tab_widget.currentIndex() == 1
+        if sp_tab_active:
+            # ... update IQ plot, received FFT plot, range-FFT overlay
+
+Why it helps:
+    When the user is on the Radar tab (Tab 0, the default), the 3
+    diagnostic plots are never touched.  This skips ~5 ms of unnecessary
+    per-frame plot updates.
+
+
+================================================================================
+8. PIPELINED CAPTURE (ThreadPoolExecutor)
+================================================================================
+File:   radar_utils/tracking.py — RangeDopplerProcessing
+
+What changed:
+    A ThreadPoolExecutor with 1 worker thread runs get_radar_data() (which
+    calls adc.rx() over the network) in the background while the main
+    thread processes and renders the PREVIOUS frame.
+
+    Before (sequential):
+        Frame N:  [Capture][Process][Plot]
+        Frame N+1:                        [Capture][Process][Plot]
+        Frame time = Capture + Process + Plot
+
+    After (pipelined):
+        Frame N:  [Capture N][Process N + Plot N]
+        Frame N+1:            [Capture N+1·····][Process N+1 + Plot N+1]
+        Frame time = max(Capture, Process + Plot)
+
+    Implementation:
+        _capture_pool = ThreadPoolExecutor(max_workers=1)
+        _cap_future = _capture_pool.submit(_timed_capture)
+
+        while True:
+            data, cap_ms = _cap_future.result()     # wait for current
+            _cap_future = _capture_pool.submit(...)  # start next immediately
+            # ... process + plot data ...
+
+    The pool is shut down in the finally block with shutdown(wait=False).
+
+Why it helps:
+    With Capture ~540 ms and Process+Plot ~250 ms, the frame time drops
+    from ~790 ms to ~540 ms (the longer of the two stages).  This is a
+    ~32% throughput improvement with zero change to data quality.
+
+    Note: This adds 1 frame of latency to beam-tracking (the next capture
+    starts before the current frame's steering update).  For non-tracking
+    use this is invisible; for tracking the existing gains/smoothing handle
+    the extra ~0.5 s gracefully.
+
+
+================================================================================
+9. WALL-CLOCK FPS TIMING
+================================================================================
+File:   radar_utils/tracking.py — RangeDopplerProcessing
+
+What changed:
+    The FPS label previously summed capture + process + plot times:
+        _t_frame_ms = _t_cap_ms + _t_proc_ms + _t_plot_ms
+
+    This was correct for sequential execution but wrong for the pipelined
+    architecture (it would overcount by the overlap amount).  Replaced with
+    true wall-clock measurement:
+
+        _t_wall_now = time.perf_counter()
+        _t_frame_ms = (_t_wall_now - _t_wall_prev) * 1000
+        _t_wall_prev = _t_wall_now
+
+    The capture thread also self-times its duration and reports it via the
+    future return value, so the "Capture: XX ms" label still shows accurate
+    IIO transfer time.
+
+Why it helps:
+    Gives the operator a truthful FPS reading that reflects actual throughput
+    including pipeline overlap, instead of an artificially pessimistic sum.
+
+
+================================================================================
+10. ZCU102 NETWORK TUNING (systemd boot service)
+================================================================================
+Location:  ZCU102 board (192.168.0.101)
+    Script:  /usr/local/bin/radar-net-tune.sh
+    Service: /etc/systemd/system/radar-net-tune.service
+
+What changed:
+    A systemd oneshot service applies network tuning at every boot:
+
+    +-------------------------------+----------+-----------+------------------+
+    | Parameter                     | Before   | After     | Purpose          |
+    +-------------------------------+----------+-----------+------------------+
+    | ethtool -G eth0 rx            | 512      | 4096      | NIC RX ring depth|
+    | ethtool -G eth0 tx            | 512      | 2048      | NIC TX ring depth|
+    | net.core.wmem_max             | 1 MB     | 16 MB     | Max socket write |
+    | net.core.wmem_default         | 212 KB   | 4 MB      | Default sock buf |
+    | net.ipv4.tcp_wmem (max)       | 4 MB     | 16 MB     | TCP write ceiling|
+    | net.core.netdev_max_backlog   | 1000     | 5000      | NIC→kernel queue |
+    | net.ipv4.tcp_no_metrics_save  | 0        | 1         | No stale RTT     |
+    +-------------------------------+----------+-----------+------------------+
+
+Why it helps:
+    The iiod daemon on the ZCU102 streams 3 × 2^20 complex samples (~24 MB)
+    over TCP to the PC.  With the old 212 KB default write buffer and 512-
+    deep NIC ring, the TCP stack couldn't sustain full 1 Gbps throughput —
+    it stalled waiting for ACKs and dropped packets during DMA bursts.
+
+    Larger socket buffers let TCP's sliding window fill the bandwidth-delay
+    product of the link.  Deeper NIC ring buffers prevent packet loss when
+    the kernel is briefly busy.  tcp_no_metrics_save prevents TCP from
+    caching pessimistic RTT estimates from prior connections.
+
+    Note: Jumbo frames (9000-byte MTU) were investigated but the ZCU102's
+    Cadence GEM Ethernet MAC has a silicon-level 1536-byte frame limit and
+    does not support them.
+
+
+================================================================================
+11. setup_stingray URI BUG FIX
+================================================================================
+File:   radar_utils/hardware_setup.py — setup_stingray()
+
+What changed:
+    The function signature accepts a `uri` parameter but the ADAR1000 array
+    constructor was previously using a hardcoded "ip:192.168.0.101" string
+    instead of the passed-in `uri` variable.  Fixed to:
+
+        sray = adar1000_array(uri=uri, ...)
+
+Why it helps:
+    Ensures the Stingray beamformer connects to the same IIO context as
+    the AD9081 and TDD engine.  Without this fix, changing the URI in
+    main.py (e.g., for a different board IP) would silently fail to
+    connect the beamformer.
+
+
+================================================================================
+SUMMARY
+================================================================================
+
+    +----+--------------------------------------+-------------------------+
+    | #  | Optimization                         | Estimated Savings       |
+    +----+--------------------------------------+-------------------------+
+    |  1 | Vectorized MTI (np.diff)             | ~10-15 ms / frame       |
+    |  2 | Batch subarray FFT (3-D tensor)      | ~15-20 ms / frame       |
+    |  3 | Vectorized burst extraction           | ~10 ms / frame          |
+    |  4 | Removed dead rx_bursts_mixed          | ~5 ms / frame           |
+    |  5 | Disable TX subarray ADC channel       | ~150 ms capture savings |
+    |  6 | FFT defaults to zero-velocity bin     | ~5-10 ms / frame        |
+    |  7 | Lazy tab rendering                    | ~5 ms / frame           |
+    |  8 | Pipelined capture (ThreadPoolExecutor)| ~250 ms overlap / frame |
+    |  9 | Wall-clock FPS timing                 | Accurate measurement    |
+    | 10 | ZCU102 network tuning                 | Marginal capture savings|
+    | 11 | setup_stingray URI bug fix            | Correctness fix         |
+    +----+--------------------------------------+-------------------------+
+
+    Combined effect:
+        Process time:  295 ms  →  ~224 ms  (24% reduction)
+        Frame time:    ~839 ms →  ~540 ms  (36% reduction, with pipeline)
+        FPS:           ~1.1    →  ~1.7+    (55%+ improvement)
+
+================================================================================

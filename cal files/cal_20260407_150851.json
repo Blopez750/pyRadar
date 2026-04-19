@@ -1,0 +1,412 @@
+{
+    "timestamp": "20260407_150851",
+    "datetime": "2026-04-07T15:08:51.412515",
+    "loFreq": 14900000000.0,
+    "cal_ant_fix": [
+        99,
+        161,
+        -95,
+        0
+    ],
+    "rx_phase_cal": {
+        "1": 81.75217880730692,
+        "5": 60.85350295108487,
+        "9": 68.22665278147139,
+        "13": 53.14148646801261,
+        "17": 93.34106431777924,
+        "21": 135.76388365606232,
+        "25": 128.0285430060376,
+        "29": 141.60227668187173,
+        "2": 0,
+        "6": 7.747434762328638,
+        "10": 56.86996794025893,
+        "14": 85.15828225918695,
+        "18": 0,
+        "22": 52.24753768914253,
+        "26": 69.63056555684855,
+        "30": 89.00375932675739,
+        "3": 337.4306471727373,
+        "7": 10.831687062618338,
+        "11": 11.330735314046601,
+        "15": 320.94860845351013,
+        "19": 33.85678408489477,
+        "23": 95.76628428489602,
+        "27": 163.6580126222928,
+        "31": 243.13140494364802,
+        "4": 0,
+        "8": 319.1588959172387,
+        "12": 332.7507841945317,
+        "16": 351.4639260116494,
+        "20": 0,
+        "24": 114.05704938860252,
+        "28": 139.7309789480927,
+        "32": 224.28573923300235
+    },
+    "tx_phase_cal": {
+        "20": 0,
+        "23": 334,
+        "24": 100,
+        "27": 30,
+        "28": 348,
+        "31": 354,
+        "32": 0
+    },
+    "rx_gain_dict": {
+        "1": 49,
+        "2": 55,
+        "5": 69,
+        "6": 62,
+        "9": 82,
+        "10": 89,
+        "13": 83,
+        "14": 47,
+        "3": 49,
+        "4": 66,
+        "7": 57,
+        "8": 103,
+        "11": 90,
+        "12": 58,
+        "15": 76,
+        "16": 80,
+        "17": 56,
+        "18": 48,
+        "21": 88,
+        "22": 83,
+        "25": 127,
+        "26": 62,
+        "29": 43,
+        "30": 65
+    },
+    "rx_atten_dict": {
+        "1": 0,
+        "2": 0,
+        "5": 0,
+        "6": 0,
+        "9": 0,
+        "10": 0,
+        "13": 0,
+        "14": 0,
+        "3": 0,
+        "4": 0,
+        "7": 0,
+        "8": 0,
+        "11": 0,
+        "12": 0,
+        "15": 0,
+        "16": 0,
+        "17": 0,
+        "18": 0,
+        "21": 0,
+        "22": 0,
+        "25": 0,
+        "26": 0,
+        "29": 0,
+        "30": 0
+    },
+    "tx_gain_dict": {
+        "19": 93,
+        "20": 119,
+        "23": 121,
+        "24": 114,
+        "27": 120,
+        "28": 127,
+        "31": 123,
+        "32": 113
+    },
+    "tx_atten_dict": {
+        "19": 0,
+        "20": 0,
+        "23": 0,
+        "24": 0,
+        "27": 0,
+        "28": 0,
+        "31": 0,
+        "32": 0
+    },
+    "sray_settings": {
+        "elements": {
+            "1": {
+                "rx_gain": 49,
+                "rx_phase": 81.5625,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "2": {
+                "rx_gain": 55,
+                "rx_phase": 0.0,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "3": {
+                "rx_gain": 49,
+                "rx_phase": 337.5,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "4": {
+                "rx_gain": 66,
+                "rx_phase": 0.0,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "5": {
+                "rx_gain": 69,
+                "rx_phase": 61.875,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "6": {
+                "rx_gain": 62,
+                "rx_phase": 8.4375,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "7": {
+                "rx_gain": 57,
+                "rx_phase": 11.25,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "8": {
+                "rx_gain": 103,
+                "rx_phase": 317.8125,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "9": {
+                "rx_gain": 82,
+                "rx_phase": 67.5,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "10": {
+                "rx_gain": 89,
+                "rx_phase": 56.25,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "11": {
+                "rx_gain": 90,
+                "rx_phase": 11.25,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "12": {
+                "rx_gain": 58,
+                "rx_phase": 331.875,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "13": {
+                "rx_gain": 83,
+                "rx_phase": 53.4375,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "14": {
+                "rx_gain": 47,
+                "rx_phase": 84.375,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "15": {
+                "rx_gain": 76,
+                "rx_phase": 320.625,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "16": {
+                "rx_gain": 80,
+                "rx_phase": 351.5625,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "17": {
+                "rx_gain": 56,
+                "rx_phase": 92.8125,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "18": {
+                "rx_gain": 48,
+                "rx_phase": 0.0,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "19": {
+                "rx_gain": 127,
+                "rx_phase": 33.75,
+                "rx_attenuator": 0,
+                "tx_gain": 93,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "20": {
+                "rx_gain": 127,
+                "rx_phase": 0.0,
+                "rx_attenuator": 0,
+                "tx_gain": 119,
+                "tx_phase": 0,
+                "tx_attenuator": 0
+            },
+            "21": {
+                "rx_gain": 88,
+                "rx_phase": 135.0,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "22": {
+                "rx_gain": 83,
+                "rx_phase": 53.4375,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "23": {
+                "rx_gain": 127,
+                "rx_phase": 95.625,
+                "rx_attenuator": 0,
+                "tx_gain": 121,
+                "tx_phase": 334,
+                "tx_attenuator": 0
+            },
+            "24": {
+                "rx_gain": 127,
+                "rx_phase": 115.3125,
+                "rx_attenuator": 0,
+                "tx_gain": 114,
+                "tx_phase": 100,
+                "tx_attenuator": 0
+            },
+            "25": {
+                "rx_gain": 127,
+                "rx_phase": 129.375,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "26": {
+                "rx_gain": 62,
+                "rx_phase": 70.3125,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "27": {
+                "rx_gain": 127,
+                "rx_phase": 163.125,
+                "rx_attenuator": 0,
+                "tx_gain": 120,
+                "tx_phase": 30,
+                "tx_attenuator": 0
+            },
+            "28": {
+                "rx_gain": 127,
+                "rx_phase": 140.625,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 348,
+                "tx_attenuator": 0
+            },
+            "29": {
+                "rx_gain": 43,
+                "rx_phase": 140.625,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "30": {
+                "rx_gain": 65,
+                "rx_phase": 90.0,
+                "rx_attenuator": 0,
+                "tx_gain": 127,
+                "tx_phase": 0.0,
+                "tx_attenuator": 0
+            },
+            "31": {
+                "rx_gain": 127,
+                "rx_phase": 241.875,
+                "rx_attenuator": 0,
+                "tx_gain": 123,
+                "tx_phase": 354,
+                "tx_attenuator": 0
+            },
+            "32": {
+                "rx_gain": 127,
+                "rx_phase": 225.0,
+                "rx_attenuator": 0,
+                "tx_gain": 113,
+                "tx_phase": 0,
+                "tx_attenuator": 0
+            }
+        },
+        "devices": {
+            "1": {
+                "mode": "tx"
+            },
+            "2": {
+                "mode": "tx"
+            },
+            "3": {
+                "mode": "tx"
+            },
+            "4": {
+                "mode": "tx"
+            },
+            "5": {
+                "mode": "tx"
+            },
+            "6": {
+                "mode": "tx"
+            },
+            "7": {
+                "mode": "tx"
+            },
+            "8": {
+                "mode": "tx"
+            }
+        }
+    }
+}
