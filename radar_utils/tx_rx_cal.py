@@ -44,7 +44,6 @@ from custom_libs.adar1000 import adar1000_array
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button
 import numpy as np
-import pandas as pd
 
 def setup(N_rx):
     """
@@ -561,17 +560,6 @@ def rx_cal_full(url, sray, conv, subarray, subarray_ref, subarray_targ,
 
     close_btn.on_clicked(on_close_clicked)
 
-
-    plt.savefig("rx_cal_plot.png")  # Save the figure as a PNG file
-
-    # Create a DataFrame using the correct ADC channel per active RX subarray
-    df = pd.DataFrame({
-        f'RX Cal Data Subarray {sa_num} (ADC ch {adc_ch})': rx_cal_data[:, adc_ch].real
-        for sa_num, adc_ch in rx_subarray_labels.items()
-    })
-
-    # Save the DataFrame to a CSV file
-    df.to_csv('rx_cal_data.csv', index=False)
 
     # Display the plot
     plt.show()
