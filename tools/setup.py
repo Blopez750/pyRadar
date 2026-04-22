@@ -147,6 +147,19 @@ def check_libiio_windows():
         print("=" * 60)
 
 
+def check_python_version():
+    """Ensure Python 3.10 or newer is being used."""
+    major, minor = sys.version_info.major, sys.version_info.minor
+    if (major, minor) >= (3, 10):
+        print(f"  Python {major}.{minor} OK")
+        return
+    print("\n" + "=" * 60)
+    print(f"ERROR: Python 3.10+ is required, but you are running {major}.{minor}.")
+    print("Download the latest Python from:  https://www.python.org/downloads/")
+    print("=" * 60)
+    sys.exit(1)
+
+
 def check_git():
     """Verify git is on PATH — required by pip to install pyadi-iio from source."""
     try:
@@ -180,6 +193,7 @@ def main():
     print(f"  Stingray X-Band Radar — Setup ({platform.system()})")
     print("=" * 60)
 
+    check_python_version()
     check_git()
     create_venv()
     install_requirements()
