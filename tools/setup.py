@@ -147,11 +147,40 @@ def check_libiio_windows():
         print("=" * 60)
 
 
+def check_git():
+    """Verify git is on PATH — required by pip to install pyadi-iio from source."""
+    try:
+        result = subprocess.run(
+            ["git", "--version"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            print(f"  git found: {result.stdout.strip()}")
+            return
+    except FileNotFoundError:
+        pass
+
+    print("\n" + "=" * 60)
+    print("ERROR: git is not installed or not on your PATH.")
+    print("git is required to install pyadi-iio from source.")
+    print()
+    if IS_WINDOWS:
+        print("Install git from:  https://git-scm.com/download/win")
+        print("Then restart this setup script.")
+    else:
+        print("Install with:  sudo apt install git   (Debian/Ubuntu)")
+        print("           or:  sudo dnf install git   (Fedora/RHEL)")
+    print("=" * 60)
+    sys.exit(1)
+
+
 def main():
     print("=" * 60)
     print(f"  Stingray X-Band Radar — Setup ({platform.system()})")
     print("=" * 60)
 
+    check_git()
     create_venv()
     install_requirements()
 
