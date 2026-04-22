@@ -104,8 +104,8 @@ def FMCWScan(conv, sray, cal_ant_fix, subarray_modes, iq, BW, PRF,
     try:
         handles['image_item'].getViewBox().invertY(False)
         handles['image_item'].getViewBox().invertX(True)
-    except Exception as e:
-        print(f"Could not set axis orientation: {e}")
+    except Exception:
+        pass
 
     # Levels will auto-scale to the true data range in update_fmcw_radar_viewer
 
@@ -190,7 +190,6 @@ def FMCWScan(conv, sray, cal_ant_fix, subarray_modes, iq, BW, PRF,
 
     def scan_update_dynrange(value):
         color_scale['dyn_range'] = value
-        print(f"FMCWScan dynamic range set to {value:.0f} dB")
 
     scan_dynrange_spin.valueChanged.connect(scan_update_dynrange)
 
@@ -209,7 +208,6 @@ def FMCWScan(conv, sray, cal_ant_fix, subarray_modes, iq, BW, PRF,
 
     def scan_update_zerobins(value):
         zero_bins_state['count'] = value
-        print(f"FMCWScan zero range bins set to {value}")
 
     scan_zerobins_spin.valueChanged.connect(scan_update_zerobins)
 
@@ -245,7 +243,6 @@ def FMCWScan(conv, sray, cal_ant_fix, subarray_modes, iq, BW, PRF,
                 for channel in device.channels:
                     channel.tx_gain = value
         sray.latch_tx_settings()
-        print(f"FMCWScan TX PA gain set to {value}")
 
     scan_tx_gain_slider.valueChanged.connect(scan_update_tx_gain)
 
@@ -291,8 +288,7 @@ def FMCWScan(conv, sray, cal_ant_fix, subarray_modes, iq, BW, PRF,
                     try:
                         data = data_capture_cal(conv, cal_ant_fix)
                         break
-                    except (BrokenPipeError, OSError) as e:
-                        print(f"Baseline capture failed (attempt {_attempt+1}/3): {e}")
+                    except (BrokenPipeError, OSError):
                         time.sleep(0.05)
                 if data is None:
                     continue
@@ -310,7 +306,6 @@ def FMCWScan(conv, sray, cal_ant_fix, subarray_modes, iq, BW, PRF,
                 )
                 baseline_accum_full[:, angle_idx] += heatmap_dummy_full[:, angle_idx]
 
-        print("Done capturing baseline environment")
         H_baseline = baseline_accum_full / N_baseline_frames
         handles['H_baseline'] = H_baseline
         handles['H_baseline_r_centers'] = r_centers_full.copy()
@@ -361,11 +356,9 @@ def FMCWScan(conv, sray, cal_ant_fix, subarray_modes, iq, BW, PRF,
                     try:
                         data = data_capture_cal(conv, cal_ant_fix)
                         break
-                    except (BrokenPipeError, OSError) as e:
-                        print(f"ADC capture failed (attempt {_attempt+1}/3): {e}")
+                    except (BrokenPipeError, OSError):
                         time.sleep(0.05)
                 if data is None:
-                    print(f"Skipping angle {scan_angle}° — capture failed after 3 attempts")
                     continue
 
                 sub1, sub2, sub4, sum_data = extract_rx_subarrays(
@@ -469,40 +462,19 @@ def FMCWScan(conv, sray, cal_ant_fix, subarray_modes, iq, BW, PRF,
                 update_fmcw_radar_viewer(
                     handles, 0, dyn_range=color_scale['dyn_range'])
 
-                # Debug: print min/max magnitudes within visible range
                 max_flat = np.argmax(H_current)
-                max_r_idx, max_a_idx = np.unravel_index(max_flat, H_current.shape)
-                max_val = H_current[max_r_idx, max_a_idx]
-                max_range_m = r_centers[max_r_idx] if max_r_idx < len(r_centers) else 0.0
-                max_angle_deg = angle_vals[max_a_idx] if max_a_idx < len(angle_vals) else 0.0
-
-                min_flat = np.argmin(H_current)
-                min_r_idx, min_a_idx = np.unravel_index(min_flat, H_current.shape)
-                min_val = H_current[min_r_idx, min_a_idx]
-                min_range_m = r_centers[min_r_idx] if min_r_idx < len(r_centers) else 0.0
-                min_angle_deg = angle_vals[min_a_idx] if min_a_idx < len(angle_vals) else 0.0
-
-                lv = handles.get('levels', (0, 1))
-                max_dB = 20.0 * np.log10(max(max_val, 1e-6))
-                min_dB = 20.0 * np.log10(max(min_val, 1e-6))
-                print(f"  HEATMAP  max={max_val:.2f} ({max_dB:.1f} dB) @ range={max_range_m:.2f}m, angle={max_angle_deg:.1f}°"
-                      f"  |  min={min_val:.2f} ({min_dB:.1f} dB) @ range={min_range_m:.2f}m, angle={min_angle_deg:.1f}°"
-                      f"  |  levels=({lv[0]:.1f}, {lv[1]:.1f}) dB")
-
-                peak_r_idx, peak_a_idx = max_r_idx, max_a_idx
-                peak_range_m = max_range_m
-                peak_angle_deg = max_angle_deg
+                peak_r_idx, peak_a_idx = np.unravel_index(max_flat, H_current.shape)
+                peak_range_m = r_centers[peak_r_idx] if peak_r_idx < len(r_centers) else 0.0
+                peak_angle_deg = angle_vals[peak_a_idx] if peak_a_idx < len(angle_vals) else 0.0
                 scan_range_value_label.setText(f"Range: {peak_range_m:.2f} m")
                 scan_angle_value_label.setText(
                     f"Angle: {-1.0 * peak_angle_deg:.1f}\u00b0")
                 handles['app'].processEvents()
 
-        print("Exiting FMCW Scan (user pressed Q.)")
         minimise_by_title("FMCW Radar \u2013 Live")
 
     except KeyboardInterrupt:
-        print("Exiting FMCW Scan (keyboard interrupt).")
+        pass
 
     except Exception as e:
-        print(f"FMCWScan error: {e}")
         raise

@@ -114,9 +114,9 @@ from custom_libs.adar1000 import adar1000
 #       internally by the AD9081 DAC + XUD1A up-converter.
 #
 uri = "ip:192.168.0.101"            # IP address of the FPGA / ZCU102
-N_rx = 2**20                         # ADC buffer size (samples per capture)
+N_rx = 2**12                         # ADC buffer size (samples per capture)
 BW = 250e6                          # Chirp bandwidth in Hz (wider → finer range resolution)
-num_chirps = 128                     # Chirps per buffer (more → finer velocity resolution)
+num_chirps = 1                     # Chirps per buffer (more → finer velocity resolution)
 duty_cycle = 1.0                     # TX duty cycle (1.0 = continuous wave / FMCW)
 source_freq_ghz = 10.4              # Point-source frequency for calibration (GHz)
 buffer_size = N_rx

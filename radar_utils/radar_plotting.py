@@ -2,7 +2,7 @@
 import numpy as np
 import json
 import os
-from .tracking import reset_track
+
 
 # =============================================================================
 # Settings persistence
