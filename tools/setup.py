@@ -15,8 +15,9 @@ import sys
 import venv
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-REQUIREMENTS = os.path.join(SCRIPT_DIR, "pyRadar", "requirements.txt")
-VENV_DIR = os.path.join(SCRIPT_DIR, ".venv")
+PROJECT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+REQUIREMENTS = os.path.join(PROJECT_DIR, "requirements.txt")
+VENV_DIR = os.path.join(PROJECT_DIR, ".venv")
 IS_WINDOWS = platform.system() == "Windows"
 
 # Packages that need special handling per platform
@@ -73,7 +74,7 @@ def install_requirements():
     reqs = filtered_requirements(skip)
 
     # Write a temporary filtered requirements file
-    tmp_req = os.path.join(SCRIPT_DIR, ".tmp_requirements.txt")
+    tmp_req = os.path.join(PROJECT_DIR, ".tmp_requirements.txt")
     with open(tmp_req, "w") as f:
         f.write("\n".join(reqs) + "\n")
 
